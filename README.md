@@ -1,39 +1,92 @@
 # Lab 1
 
-Turn in one copy for each group, both as a word or PDF document and the R Markdown source file.
-
 ## Lab Overview
 
-For this lab, you will be exploring a dataset containing housing sales in King County, Washington (the greater Seattle area). The intent of this lab is to get a feel for some of the basic features using tidyverse in R and explore this data set.
+This lab will explore basic `ggplot2` functionality. Please turn in one compiled document (PDF) per group. We will use two datasets related to the recent XXXIII Olympiad (Olympics) held in Paris, France.
 
-The entire lab will be worth 20 points. Please consider clarity of code and thoughtful writing with an emphasis on concise interpretations as each will be considered when grading labs.
 
-## Questions
-Answer the following questions in this R Markdown document. Please include code where necessary.
 
-Download the Seattle Housing dataset, available at: [http://math.montana.edu/ahoegh/teaching/stat408/datasets/SeattleHousing.csv](http://math.montana.edu/ahoegh/teaching/stat408/datasets/SeattleHousing.csv).
-```{r read.data}
+## Medal Count Dataset
+
+The first dataset contains medal counts for all countries earning a medal.
+
+```{r, message = F}
 library(tidyverse)
-seattle_housing <- read_csv("http://math.montana.edu/ahoegh/teaching/stat408/datasets/SeattleHousing.csv")
+medals <- read_csv('https://raw.githubusercontent.com/stat408/Data/main/MedalCount.csv')
+
+```
+
+### 1. (4 points)
+
+Create a figure that tells the story of the medal count at the Paris Olympics.
+
+## Olympic Athlete Dataset
+
+This set of figures will use an Olympic dataset from Kaggle. Additional information is available at <https://www.kaggle.com/datasets/willianoliveiragibin/olympics-2024?resource=download&select=athletes+new.csv>
+
+```{r, message = F}
+library(tidyverse)
+athletes <- read_csv('https://raw.githubusercontent.com/stat408/Data/main/athletes%20new.csv') |>
+  mutate(birth_year = year(birth_date))
+```
+
+### 2. (4 points)
+
+Using the `birth_date` variable, create a figure that visualizes the ages of the Olympians. Which sports tend to have the youngest and oldest athletes?
+
+
+### 3. (4 points)
+
+Create a figure that displays the number of competing athletes from the 12 countries with the most medals. 
+
+```{r}
+string_in <- medals$Country[1]
+
+extract_country_abbr <- function(string_in){
+  str_split(string_in, '\\(' )[[1]][2] |>
+  str_sub(end = -2)
+}  
+
+top12 <- sapply(medals$Country[1:12], extract_country_abbr)
+
+top12_athletes <- athletes |>
+  filter(country_code %in% top12)
+
+```
+
+Note: I've made this process easier for you by only including athletes from these 12 countries.
+
+
+## 4. (4 points)
+
+Use the `Q4_data` to visualize the relationship between the number of medals earned by a country against the number of athletes  participating in the Olympics.
+
+```{r}
+medals$country_code <- sapply(medals$Country, extract_country_abbr) 
+
+Q4_data <- athletes |> 
+  group_by(country_code, country_full) |>
+  tally() |>
+  rename(num_athletes = n) |>
+  left_join(medals, by = 'country_code') |>
+  mutate(`Total Medals` = case_when(
+    !is.na(`Total Medals`) ~ `Total Medals`,
+    is.na(`Total Medals`) ~ 0
+  )) |>
+  select(country_code, num_athletes, country_full, `Total Medals`) |>
+  rename(total_medals = `Total Medals`)
+
 ```
 
 
-#### 1. (4 points)
-Describe the variables in the dataset. Select a few features in the data set that you think are relevant for determining housing prices. How might each of these influence housing prices?
-
-#### 2. (4 points)
-Use the `group_by()` function along with `summarize()` to create and print a new dataframe that contains summary statistics on housing prices. Write a short paragraph describing this dataframe.
-
-#### 3. (6 points)
-Using `ggplot2` create two figures with at least one showing the relationship between a two variable in the data set with the housing price.
-
-#### 4. (4 points)
-Summarize the take away points from your figures. These summaries should be 3-4 sentences and provide all of the context for your graphics so that an outside observer could understand the story you are illustrating.
 
 
-#### 5. (4 points)
-Choose a variable or set of variables and create a subset of homes from the entire the dataset. For example, consider homes with greater than 3 bedrooms. Then describe the differences between your selected subset of homes and the entire data set. You can do this with numerical summaries, graphical displays, and/or qualitative descriptions. 
+## 5. (4 points)
 
-#### 6. (3 points)
-Based on what you have found in this data set, how might you model housing prices ($Y_{price} = ?$)? Note, I am not asking you to fit a model, but rather describe important relationships between the variables and housing prices. You may discuss statistical modeling techniques, but we will cover these later in the course.
+The `athletes` dataset also contains the events the athletes are competing in. See the value for Montana's Katherine Berkoff
 
+
+or gymnast Simone Biles 
+
+
+Describe (in words or pseudocode) what you'd need to do and/or what additional information you'd need in order to create a figure that displayed the number of events competed in by athletes that won medals.
